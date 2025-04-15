@@ -1,184 +1,556 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Calculadora de Préstamos</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"/>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <style>
-    body.dark-mode {
-      background-color: #121212;
-      color: #ffffff;
-    }
-    .dark-mode .table {
-      color: #ffffff;
-    }
-    .card {
-      margin-top: 20px;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Préstamos</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+        /* Tema oscuro personalizado */
+        body {
+            background: 
+                linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)),
+                url('https://i.ibb.co/pvvdQ9js/Money-2.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: #f8f9fa;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        /* Tema claro con la misma imagen pero gradiente claro */
+        body.modo-claro {
+            background: 
+                linear-gradient(rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.7)),
+                url('https://i.ibb.co/pvvdQ9js/Money-2.jpg') no-repeat center center fixed !important;
+            background-size: cover !important;
+            color: #212529;
+        }
+
+        /* Contenedor principal con transparencia */
+        .container {
+            background-color: rgba(33, 37, 41, 0.9) !important;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            margin-top: 2rem;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        body.modo-claro .container {
+            background-color: rgba(255, 255, 255, 0.9) !important;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Título centrado */
+        .titulo-contenedor {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .titulo-principal {
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        /* Campos del formulario */
+        .form-control, .form-select {
+            background-color: rgba(52, 58, 64, 0.8) !important;
+            border: 1px solid #495057;
+            color: #f8f9fa;
+            transition: all 0.3s ease;
+        }
+
+        body.modo-claro .form-control,
+        body.modo-claro .form-select {
+            background-color: rgba(248, 249, 250, 0.9) !important;
+            border: 1px solid #ced4da;
+            color: #212529;
+        }
+
+        .form-control:focus {
+            background-color: rgba(52, 58, 64, 1) !important;
+            color: #f8f9fa;
+            border-color: #6c757d;
+            box-shadow: 0 0 0 0.25rem rgba(108, 117, 125, 0.25);
+        }
+
+        body.modo-claro .form-control:focus {
+            background-color: rgba(248, 249, 250, 1) !important;
+            color: #212529;
+        }
+
+        /* Tabla de amortización - Modo oscuro (gris oscuro con transparencia) */
+        #tabla-amortizacion,
+        #tabla-amortizacion th,
+        #tabla-amortizacion td {
+            background-color: rgba(60, 60, 60, 0.85) !important;
+            color: #ffffff !important;
+        }
+
+        #tabla-amortizacion th {
+            background-color: rgba(40, 40, 40, 0.9) !important;
+            border-color: #495057 !important;
+        }
+
+        #tabla-amortizacion td {
+            border-color: rgba(70, 70, 70, 0.7) !important;
+        }
+
+        /* Tabla de amortización - Modo claro */
+        body.modo-claro #tabla-amortizacion,
+        body.modo-claro #tabla-amortizacion th,
+        body.modo-claro #tabla-amortizacion td {
+            background-color: rgba(248, 250, 249, 0.9) !important;
+            color: #212529 !important;
+        }
+
+        body.modo-claro #tabla-amortizacion th {
+            background-color: rgba(222, 226, 230, 0.9) !important;
+            border-color: #dee2e6 !important;
+        }
+
+        body.modo-claro #tabla-amortizacion td {
+            border-color: rgba(230, 222, 222, 0.7) !important;
+        }
+
+        /* Botones */
+        .btn-primary {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        
+        .btn-info {
+            background-color: #0dcaf0;
+            border-color: #0dcaf0;
+        }
+        
+        .btn-success {
+            background-color: #198754;
+            border-color: #198754;
+        }
+
+        /* Tarjetas de resultados */
+        .card.bg-dark {
+            background-color: rgba(52, 58, 64, 0.8) !important;
+            color: #f8f9fa !important;
+        }
+
+        .card.bg-dark .card-title,
+        .card.bg-dark .card-text {
+            color: #f8f9fa !important;
+        }
+
+        body.modo-claro .card.bg-dark {
+            background-color: rgba(248, 249, 250, 0.9) !important;
+            color: #212529 !important;
+        }
+
+        body.modo-claro .card.bg-dark .card-title,
+        body.modo-claro .card.bg-dark .card-text {
+            color: #212529 !important;
+        }
+
+        /* Texto en los resultados */
+        #cuota-mensual,
+        #monto-total,
+        #interes-total {
+            color: #f8f9fa !important;
+        }
+
+        body.modo-claro #cuota-mensual,
+        body.modo-claro #monto-total,
+        body.modo-claro #interes-total {
+            color: #212529 !important;
+        }
+
+        /* Créditos flotantes */
+        .creditos-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(33, 37, 41, 0.9) !important;
+            padding: 10px 15px;
+            border-radius: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transform: translateY(20px);
+            opacity: 0;
+            animation: slideIn 0.8s ease-out 1s forwards;
+            z-index: 1000;
+            border-left: 3px solid #0d6efd;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body.modo-claro .creditos-container {
+            background: rgba(255, 255, 255, 0.9) !important;
+            color: #212529;
+        }
+        
+        @keyframes slideIn {
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .dev-name {
+            color: #0dcaf0;
+            font-weight: 600;
+        }
+
+        body.modo-claro .dev-name {
+            color: #0b5ed7;
+        }
+        
+        .deepseek {
+            color: #ff6b6b;
+            font-weight: 500;
+        }
+        
+        .ai-icon {
+            color: #ff6b6b;
+            margin: 0 3px;
+        }
+
+        /* Spinner de carga */
+        .spinner-border {
+            display: none;
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        /* Tooltips */
+        .tooltip-inner {
+            max-width: 200px;
+            padding: 0.25rem 0.5rem;
+        }
+    </style>
 </head>
-<body class="container py-4">
-  <div class="d-flex justify-content-between align-items-center">
-    <h1>Calculadora de Préstamos</h1>
-    <button class="btn btn-outline-secondary" onclick="toggleDarkMode()">
-      <i class="bi bi-moon-fill"></i> Modo Oscuro
-    </button>
-  </div>
+<body>
+    <div class="container mt-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="titulo-contenedor">
+                <h1 class="titulo-principal mb-0">Calculadora de Préstamos</h1>
+            </div>
+            <button id="toggle-tema" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-moon"></i> Tema
+            </button>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <form id="form-prestamo">
+                    <div class="mb-3">
+                        <label for="monto" class="form-label">Monto del préstamo ($)</label>
+                        <input type="number" class="form-control" id="monto" name="monto" required min="1" placeholder="Ej: 100000">
+                    </div>
+                    <div class="mb-3">
+                        <label for="tna" class="form-label">Tasa Nominal Anual (TNA %)
+                            <i class="fas fa-info-circle" data-bs-toggle="tooltip" title="Tasa de interés anual aplicada al préstamo"></i>
+                        </label>
+                        <input type="number" step="0.01" class="form-control" id="tna" name="tna" required min="0" placeholder="Ej: 12.5">
+                    </div>
+                    <div class="mb-3">
+                        <label for="cuotas" class="form-label">Número de cuotas</label>
+                        <input type="number" class="form-control" id="cuotas" name="cuotas" required min="1" placeholder="Ej: 12">
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <span id="spinner" class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        Calcular
+                    </button>
+                </form>
+                
+                <div id="resultados" class="mt-4" style="display: none;">
+                    <h3>Resultados</h3>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="card bg-dark mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Cuota mensual</h5>
+                                    <p class="card-text h4">$<span id="cuota-mensual"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-dark mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Total a pagar</h5>
+                                    <p class="card-text h4">$<span id="monto-total"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-dark mb-3">
+                                <div class="card-body">
+                                    <h5 class="card-title">Interés total</h5>
+                                    <p class="card-text h4">$<span id="interes-total"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-  <form id="loanForm" class="mt-4">
-    <div class="row g-3">
-      <div class="col-md-3">
-        <label for="monto" class="form-label">Monto del préstamo</label>
-        <input type="number" class="form-control" id="monto" name="monto" required>
-      </div>
-      <div class="col-md-3">
-        <label for="tna" class="form-label">TNA (%)</label>
-        <input type="number" class="form-control" id="tna" name="tna" step="0.01" required>
-      </div>
-      <div class="col-md-3">
-        <label for="cuotas" class="form-label">Cantidad de cuotas</label>
-        <input type="number" class="form-control" id="cuotas" name="cuotas" required>
-      </div>
-      <div class="col-md-3">
-        <label for="sistema" class="form-label">Sistema de amortización</label>
-        <select class="form-select" id="sistema" name="sistema">
-          <option value="frances" selected>Francés</option>
-          <option value="aleman">Alemán</option>
-          <option value="americano">Americano</option>
-        </select>
-      </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <canvas id="grafico-amortizacion" class="mb-4"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex gap-2 mb-3">
+                                <button id="btn-tabla" class="btn btn-info flex-grow-1">Mostrar Tabla Amortización</button>
+                                <button id="btn-excel" class="btn btn-success flex-grow-1">Exportar a Excel</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="tabla-container" style="display: none;">
+                        <h4 class="mt-4">Tabla de Amortización</h4>
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="tabla-amortizacion">
+                                <thead>
+                                    <tr>
+                                        <th>Cuota</th>
+                                        <th>Interés ($)</th>
+                                        <th>Capital ($)</th>
+                                        <th>Saldo ($)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Datos dinámicos -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="mt-4">
-      <button type="submit" class="btn btn-primary">Calcular</button>
-    </div>
-  </form>
 
-  <div id="resultados" class="mt-4" style="display:none;">
-    <div class="card">
-      <div class="card-body">
-        <h4>Resumen del préstamo</h4>
-        <p><strong>Cuota mensual estimada:</strong> $<span id="cuota_mensual"></span></p>
-        <p><strong>Monto total a pagar:</strong> $<span id="monto_total"></span></p>
-        <p><strong>Total de intereses:</strong> $<span id="interes_total"></span></p>
-      </div>
+    <!-- Créditos flotantes -->
+    <div class="creditos-container">
+        <small>
+            <i class="fas fa-code"></i> Creado por <span class="dev-name">Juan Manuel Bollani</span> 
+            con <i class="fas fa-robot ai-icon"></i> <span class="deepseek">DeepSeek</span>
+        </small>
     </div>
 
-    <div class="mt-4">
-      <h4>Gráfico de Amortización</h4>
-      <canvas id="graficoAmortizacion" height="100"></canvas>
-    </div>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // Cachear elementos del DOM
+            const elementos = {
+                form: document.getElementById("form-prestamo"),
+                resultados: document.getElementById("resultados"),
+                tablaContainer: document.getElementById("tabla-container"),
+                cuotaMensual: document.getElementById("cuota-mensual"),
+                montoTotal: document.getElementById("monto-total"),
+                interesTotal: document.getElementById("interes-total"),
+                btnTabla: document.getElementById("btn-tabla"),
+                btnExcel: document.getElementById("btn-excel"),
+                spinner: document.getElementById("spinner"),
+                toggleTema: document.getElementById("toggle-tema"),
+                grafico: document.getElementById("grafico-amortizacion")
+            };
 
-    <div class="mt-4">
-      <h4>Tabla de Amortización</h4>
-      <button class="btn btn-success mb-2" onclick="exportarExcel()">Exportar a Excel</button>
-      <div class="table-responsive">
-        <table class="table table-bordered" id="tablaAmortizacion">
-          <thead>
-            <tr>
-              <th>Cuota</th>
-              <th>Interés</th>
-              <th>Capital</th>
-              <th>Saldo</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+            let datosTabla = [];
+            let chart = null;
 
-  <script>
-    let chart = null;
+            // Función para calcular la amortización
+            function calcularAmortizacion(monto, tna, cuotas) {
+                const tnm = (tna / 100) / 12;
+                let cuotaMensual, tabla = [];
+                
+                if (tnm === 0) {  // Préstamo sin intereses
+                    cuotaMensual = monto / cuotas;
+                } else {
+                    cuotaMensual = monto * (tnm * Math.pow(1 + tnm, cuotas)) / (Math.pow(1 + tnm, cuotas) - 1);
+                }
 
-    document.getElementById("loanForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
+                let saldo = monto;
+                for (let i = 1; i <= cuotas; i++) {
+                    const interes = saldo * tnm;
+                    const capital = cuotaMensual - interes;
+                    saldo -= capital;
+                    tabla.push({
+                        cuota: i,
+                        interes: parseFloat(interes.toFixed(2)),
+                        capital: parseFloat(capital.toFixed(2)),
+                        saldo: parseFloat(Math.max(saldo, 0).toFixed(2))
+                    });
+                }
 
-      const formData = new FormData(this);
-      const response = await fetch("/", {
-        method: "POST",
-        body: formData,
-      });
+                return {
+                    cuota_mensual: parseFloat(cuotaMensual.toFixed(2)),
+                    monto_total: parseFloat((cuotaMensual * cuotas).toFixed(2)),
+                    interes_total: parseFloat((cuotaMensual * cuotas - monto).toFixed(2)),
+                    tabla_amortizacion: tabla
+                };
+            }
 
-      const data = await response.json();
+            // Función para mostrar el gráfico
+            function mostrarGrafico(monto, interesTotal) {
+                if (chart) chart.destroy();
+                
+                const ctx = elementos.grafico.getContext('2d');
+                chart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Capital', 'Interés'],
+                        datasets: [{
+                            data: [monto, interesTotal],
+                            backgroundColor: ['#4bc0c0', '#ff6384'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = context.raw;
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = Math.round((value / total) * 100);
+                                        return `${context.label}: $${value.toLocaleString()} (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
 
-      if (data.error) {
-        alert(data.error);
-        return;
-      }
+            // Evento del formulario
+            elementos.form.addEventListener("submit", (e) => {
+                e.preventDefault();
+                
+                elementos.spinner.style.display = 'inline-block';
+                
+                // Simular carga (opcional, para mejor UX)
+                setTimeout(() => {
+                    const monto = parseFloat(elementos.form.monto.value);
+                    const tna = parseFloat(elementos.form.tna.value);
+                    const cuotas = parseInt(elementos.form.cuotas.value);
 
-      document.getElementById("cuota_mensual").textContent = data.cuota_mensual;
-      document.getElementById("monto_total").textContent = data.monto_total;
-      document.getElementById("interes_total").textContent = data.interes_total;
+                    // Validación
+                    if (monto <= 0 || tna < 0 || cuotas <= 0) {
+                        alert("Todos los valores deben ser positivos.");
+                        elementos.spinner.style.display = 'none';
+                        return;
+                    }
 
-      const tbody = document.querySelector("#tablaAmortizacion tbody");
-      tbody.innerHTML = "";
-      data.tabla_amortizacion.forEach((fila) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${fila.cuota}</td>
-          <td>${fila.interes}</td>
-          <td>${fila.capital}</td>
-          <td>${fila.saldo}</td>
-        `;
-        tbody.appendChild(tr);
-      });
+                    // Calcular
+                    const resultado = calcularAmortizacion(monto, tna, cuotas);
+                    datosTabla = resultado.tabla_amortizacion;
 
-      // Gráfico
-      const labels = data.tabla_amortizacion.map(f => `Cuota ${f.cuota}`);
-      const interesData = data.tabla_amortizacion.map(f => f.interes);
-      const capitalData = data.tabla_amortizacion.map(f => f.capital);
+                    // Mostrar resultados
+                    elementos.cuotaMensual.textContent = resultado.cuota_mensual.toLocaleString("es-ES", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    elementos.montoTotal.textContent = resultado.monto_total.toLocaleString("es-ES", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
+                    elementos.interesTotal.textContent = resultado.interes_total.toLocaleString("es-ES", {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2
+                    });
 
-      if (chart) chart.destroy();
-      const ctx = document.getElementById("graficoAmortizacion").getContext("2d");
-      chart = new Chart(ctx, {
-        type: "bar",
-        data: {
-          labels: labels,
-          datasets: [
-            {
-              label: "Interés",
-              data: interesData,
-              backgroundColor: "rgba(255, 99, 132, 0.5)",
-            },
-            {
-              label: "Capital",
-              data: capitalData,
-              backgroundColor: "rgba(54, 162, 235, 0.5)",
-            },
-          ],
-        },
-        options: {
-          responsive: true,
-          scales: {
-            x: { stacked: true },
-            y: { stacked: true },
-          },
-        },
-      });
+                    // Mostrar gráfico
+                    mostrarGrafico(monto, resultado.interes_total);
 
-      document.getElementById("resultados").style.display = "block";
-    });
+                    elementos.resultados.style.display = "block";
+                    elementos.tablaContainer.style.display = "none";
+                    elementos.spinner.style.display = 'none';
 
-    function exportarExcel() {
-      let csv = "Cuota,Interés,Capital,Saldo\n";
-      document.querySelectorAll("#tablaAmortizacion tbody tr").forEach(row => {
-        const cols = row.querySelectorAll("td");
-        csv += Array.from(cols).map(td => td.textContent).join(",") + "\n";
-      });
+                    // Guardar en localStorage
+                    localStorage.setItem('ultimoPrestamo', JSON.stringify({ monto, tna, cuotas }));
+                }, 500);
+            });
 
-      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = "tabla_amortizacion.csv";
-      link.click();
-    }
+            // Mostrar/ocultar tabla
+            elementos.btnTabla.addEventListener("click", (e) => {
+                const tbody = document.querySelector("#tabla-amortizacion tbody");
+                
+                if (elementos.tablaContainer.style.display === "none") {
+                    tbody.innerHTML = datosTabla.map(fila => `
+                        <tr>
+                            <td>${fila.cuota}</td>
+                            <td>${fila.interes.toLocaleString("es-ES", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })}</td>
+                            <td>${fila.capital.toLocaleString("es-ES", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })}</td>
+                            <td>${fila.saldo.toLocaleString("es-ES", {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2
+                            })}</td>
+                        </tr>
+                    `).join("");
+                    
+                    elementos.tablaContainer.style.display = "block";
+                    e.target.textContent = "Ocultar Tabla";
+                } else {
+                    elementos.tablaContainer.style.display = "none";
+                    e.target.textContent = "Mostrar Tabla Amortización";
+                }
+            });
 
-    function toggleDarkMode() {
-      document.body.classList.toggle("dark-mode");
-    }
-  </script>
+            // Exportar a Excel
+            elementos.btnExcel.addEventListener("click", () => {
+                if (datosTabla.length === 0) {
+                    alert("Primero calcule un préstamo");
+                    return;
+                }
+
+                const ws = XLSX.utils.json_to_sheet(datosTabla.map(fila => ({
+                    "Cuota": fila.cuota,
+                    "Interés ($)": fila.interes,
+                    "Capital ($)": fila.capital,
+                    "Saldo ($)": fila.saldo
+                })));
+                
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Amortización");
+                XLSX.writeFile(wb, "amortizacion_prestamo.xlsx");
+            });
+
+            // Toggle tema claro/oscuro
+            elementos.toggleTema.addEventListener("click", () => {
+                document.body.classList.toggle("modo-claro");
+                const icon = elementos.toggleTema.querySelector("i");
+                if (document.body.classList.contains("modo-claro")) {
+                    icon.classList.replace("fa-moon", "fa-sun");
+                } else {
+                    icon.classList.replace("fa-sun", "fa-moon");
+                }
+            });
+
+            // Cargar último cálculo al iniciar
+            window.addEventListener('load', () => {
+                const ultimo = JSON.parse(localStorage.getItem('ultimoPrestamo'));
+                if (ultimo) {
+                    elementos.form.monto.value = ultimo.monto;
+                    elementos.form.tna.value = ultimo.tna;
+                    elementos.form.cuotas.value = ultimo.cuotas;
+                }
+
+                // Inicializar tooltips de Bootstrap
+                const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+                tooltipTriggerList.map(function (tooltipTriggerEl) {
+                    return new bootstrap.Tooltip(tooltipTriggerEl);
+                });
+            });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
